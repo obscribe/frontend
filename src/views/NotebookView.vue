@@ -3,6 +3,7 @@ import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotebookStore } from '@/stores/notebooks'
 import { usePageStore } from '@/stores/pages'
+import { formatRelativeDate } from '@/utils/formatDate'
 
 const route = useRoute()
 const router = useRouter()
@@ -100,13 +101,7 @@ async function confirmDeletePage() {
 }
 
 function formatDate(dateStr) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+  return formatRelativeDate(dateStr)
 }
 </script>
 

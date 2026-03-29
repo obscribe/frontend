@@ -125,8 +125,8 @@ function isActiveNotebook(id) {
               <span v-if="notebook.isFavorited" class="sidebar__notebook-star">★</span>
               {{ notebook.title }}
             </span>
-            <span class="sidebar__notebook-count">{{ notebook.pageCount }} pages</span>
           </div>
+          <span v-if="notebook.pageCount" class="sidebar__notebook-badge">{{ notebook.pageCount }}</span>
         </button>
       </div>
     </div>
@@ -377,9 +377,17 @@ function isActiveNotebook(id) {
   flex-shrink: 0;
 }
 
-.sidebar__notebook-count {
-  font-size: 0.75rem;
+.sidebar__notebook-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
   color: var(--text-tertiary);
+  background: var(--bg-hover);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sidebar__bottom-nav {

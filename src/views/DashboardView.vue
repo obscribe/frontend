@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotebookStore } from '@/stores/notebooks'
+import { formatRelativeDate } from '@/utils/formatDate'
 import NewNotebookModal from '@/components/NewNotebookModal.vue'
 
 const router = useRouter()
@@ -86,16 +87,10 @@ async function toggleFavorite(e, notebook) {
 }
 
 function formatDate(dateStr) {
-  const d = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now - d
-  const diffHours = diffMs / (1000 * 60 * 60)
-
-  if (diffHours < 1) return 'Just now'
-  if (diffHours < 24) return `${Math.floor(diffHours)}h ago`
-  if (diffHours < 48) return 'Yesterday'
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return formatRelativeDate(dateStr)
 }
+
+const hasNotebooks = computed(() => notebookStore.activeNotebooks.length > 0)
 </script>
 
 <template>
@@ -135,7 +130,27 @@ function formatDate(dateStr) {
       </button>
     </div>
 
-    <div class="dashboard__grid">
+    <!-- Empty state when no notebooks -->
+    <div v-if="!loading && !hasNotebooks" class="dashboard__empty">
+      <div class="dashboard__empty-icon">📝</div>
+      <h2 class="dashboard__empty-heading">Welcome to Obscribe!</h2>
+      <p class="dashboard__empty-text">Create your first notebook to start writing privately.</p>
+      <button class="dashboard__empty-btn" @click="showNewModal = true; editingNotebook = null">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Create Notebook
+      </button>
+      <p class="dashboard__empty-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Your notes are encrypted with AES-256-GCM before they leave your browser.
+      </p>
+    </div>
+
+    <div v-if="hasNotebooks" class="dashboard__grid">
       <div
         v-for="notebook in sortedNotebooks"
         :key="notebook.id"
@@ -224,6 +239,7 @@ function formatDate(dateStr) {
         </div>
       </button>
     </div>
+    <!-- end grid -->
 
     <NewNotebookModal
       v-if="showNewModal"
@@ -476,6 +492,69 @@ function formatDate(dateStr) {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* Empty state */
+.dashboard__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  min-height: 50vh;
+}
+
+.dashboard__empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  line-height: 1;
+}
+
+.dashboard__empty-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.dashboard__empty-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.75rem;
+  max-width: 340px;
+}
+
+.dashboard__empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dashboard__empty-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard__empty-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 2rem;
+  font-size: 0.8rem;
   color: var(--text-tertiary);
 }
 
