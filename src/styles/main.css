@@ -326,27 +326,53 @@ body {
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.tiptap-editor .ProseMirror pre {
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  padding: 1em;
-  overflow-x: auto;
-}
+/* pre/code block base styling is in the lowlight section below */
 
-.tiptap-editor .ProseMirror pre code {
-  background: none;
-  padding: 0;
-}
-
-.tiptap-editor .ProseMirror ul,
-.tiptap-editor .ProseMirror ol {
+.tiptap-editor .ProseMirror ul {
+  list-style-type: disc;
   padding-left: 1.5em;
   margin: 0.75em 0;
+}
+
+.tiptap-editor .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.75em 0;
+}
+
+/* Nested list styles */
+.tiptap-editor .ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.tiptap-editor .ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
+.tiptap-editor .ProseMirror ol ol {
+  list-style-type: lower-alpha;
+}
+
+.tiptap-editor .ProseMirror ol ol ol {
+  list-style-type: lower-roman;
+}
+
+/* Nested list indentation */
+.tiptap-editor .ProseMirror ul ul,
+.tiptap-editor .ProseMirror ol ol,
+.tiptap-editor .ProseMirror ul ol,
+.tiptap-editor .ProseMirror ol ul {
+  margin: 0.25em 0;
 }
 
 .tiptap-editor .ProseMirror li {
   margin: 0.25em 0;
   line-height: 1.8;
+}
+
+/* Remove extra margins on paragraphs inside list items */
+.tiptap-editor .ProseMirror li > p {
+  margin: 0;
 }
 
 /* Focus indicator for regular list items */
@@ -358,7 +384,7 @@ body {
 
 .tiptap-editor .ProseMirror hr {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--text-muted);
   margin: 2em 0;
 }
 
@@ -470,15 +496,20 @@ body {
   width: 100%;
   margin: 1.5em 0;
   overflow-x: auto;
-  display: block;
+  display: table;
   border-radius: var(--radius-sm);
+  table-layout: auto;
 }
 
-@media (min-width: 768px) {
-  .tiptap-editor .ProseMirror table {
-    display: table;
-    overflow: hidden;
-  }
+/* Wrapper for horizontal scroll on mobile */
+.tiptap-editor .ProseMirror .tableWrapper {
+  overflow-x: auto;
+  margin: 1.5em 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tiptap-editor .ProseMirror .tableWrapper table {
+  margin: 0;
 }
 
 .tiptap-editor .ProseMirror table td,
