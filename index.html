@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obscribe — Write privately</title>
+    <meta name="description" content="A secure, encrypted digital notebook. Your words, your vault." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <script>
+      // Prevent white flash — apply theme before anything renders
+      (function() {
+        try {
+          var user = JSON.parse(localStorage.getItem('obscribe_user'));
+          var theme = (user && user.theme) || 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch(e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+    <style>
+      /* Prevent flash of empty content */
+      html { background-color: #0a0a0a; }
+      html[data-theme="light"] { background-color: #fafaf8; }
+      #app:empty { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+      #app:empty::after { content: ''; width: 32px; height: 32px; border: 3px solid #222; border-top-color: #5b9a8b; border-radius: 50%; animation: _spin 0.7s linear infinite; }
+      html[data-theme="light"] #app:empty::after { border-color: #ddd; border-top-color: #5b9a8b; }
+      @keyframes _spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
