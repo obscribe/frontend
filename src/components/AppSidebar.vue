@@ -1,10 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useSidebar } from '@/composables/useSidebar'
 import { useNotebookStore } from '@/stores/notebooks'
 import { usePageStore } from '@/stores/pages'
 import { useAuthStore } from '@/stores/auth'
+import { useBillingStore } from '@/stores/billing'
+import { config } from '@/config'
 import NewNotebookModal from '@/components/NewNotebookModal.vue'
 
 const router = useRouter()
@@ -13,7 +15,16 @@ const { isOpen, isMobile, toggle, closeIfMobile } = useSidebar()
 const notebookStore = useNotebookStore()
 const pageStore = usePageStore()
 const authStore = useAuthStore()
+const billingStore = useBillingStore()
 const showNewModal = ref(false)
+const showUpgradeLink = computed(() => !config.selfHosted && !billingStore.isPro)
+const showProBadge = computed(() => !config.selfHosted && billingStore.isPro)
+
+onMounted(() => {
+  if (!config.selfHosted) {
+    billingStore.fetchBillingStatus()
+  }
+})
 
 const trashCount = computed(() =>
   notebookStore.trashedNotebooks.length + pageStore.trashedPages.length
@@ -149,6 +160,17 @@ function isActiveNotebook(id) {
         <span>Users</span>
       </button>
       <button
+        v-if="showUpgradeLink"
+        class="sidebar__nav-item sidebar__nav-item--upgrade"
+        :class="{ active: route.path === '/upgrade' }"
+        @click="router.push('/upgrade'); closeIfMobile()"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        <span>Go Pro</span>
+      </button>
+      <button
         class="sidebar__nav-item"
         :class="{ active: route.path === '/settings' }"
         @click="router.push('/settings'); closeIfMobile()"
@@ -165,6 +187,7 @@ function isActiveNotebook(id) {
       <div class="sidebar__user" v-if="authStore.user">
         <div class="sidebar__user-avatar">{{ authStore.userName.charAt(0).toUpperCase() }}</div>
         <span class="sidebar__user-name">{{ authStore.userName }}</span>
+        <span v-if="showProBadge" class="sidebar__pro-badge">PRO</span>
       </div>
       <button class="sidebar__nav-item" @click="authStore.logout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -448,6 +471,26 @@ function isActiveNotebook(id) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sidebar__pro-badge {
+  padding: 0.1rem 0.375rem;
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.sidebar__nav-item--upgrade {
+  color: var(--accent-text);
+}
+
+.sidebar__nav-item--upgrade:hover {
+  background: var(--accent-subtle);
+  color: var(--accent-text);
 }
 
 /* ─── Mobile responsive ─── */

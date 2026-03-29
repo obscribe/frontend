@@ -76,10 +76,37 @@ const routes = [
     meta: { layout: 'app', requiresAuth: true },
   },
   {
+    path: '/upgrade',
+    name: 'Upgrade',
+    component: () => import('@/views/UpgradeView.vue'),
+    meta: { layout: 'app', requiresAuth: true },
+    beforeEnter: (to, from, next) => {
+      if (config.selfHosted) {
+        next('/')
+      } else {
+        next()
+      }
+    },
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/SettingsView.vue'),
     meta: { layout: 'app', requiresAuth: true },
+  },
+  {
+    path: '/settings/billing',
+    name: 'SettingsBilling',
+    component: () => import('@/views/SettingsView.vue'),
+    meta: { layout: 'app', requiresAuth: true },
+    beforeEnter: (to, from, next) => {
+      if (config.selfHosted) {
+        next('/settings')
+      } else {
+        // Redirect to settings with billing tab active
+        next({ path: '/settings', query: { ...to.query, tab: 'billing' } })
+      }
+    },
   },
   {
     path: '/admin/users',

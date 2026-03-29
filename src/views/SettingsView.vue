@@ -3,21 +3,33 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
+import { config } from '@/config'
+import { useBillingStore } from '@/stores/billing'
+import BillingView from '@/views/settings/BillingView.vue'
 import api from '@/services/api'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { theme, setTheme } = useTheme()
+const billingStore = useBillingStore()
 
 // Active settings tab
 const activeTab = ref('profile')
-const tabs = [
+const baseTabs = [
   { id: 'profile', label: 'Profile', icon: 'user' },
   { id: 'security', label: 'Security', icon: 'shield' },
   { id: 'appearance', label: 'Appearance', icon: 'palette' },
-  { id: 'account', label: 'Account', icon: 'settings' },
 ]
+
+const tabs = computed(() => {
+  const t = [...baseTabs]
+  if (!config.selfHosted) {
+    t.push({ id: 'billing', label: 'Billing', icon: 'credit-card' })
+  }
+  t.push({ id: 'account', label: 'Account', icon: 'settings' })
+  return t
+})
 
 // ─── Profile ───
 const profileName = ref('')
@@ -203,8 +215,6 @@ const showDeleteModal = ref(false)
 const deleteConfirmText = ref('')
 const deleting = ref(false)
 
-const userPlan = computed(() => authStore.user?.plan || 'free')
-
 function exportData() {
   toast('info', 'Data export coming soon!')
 }
@@ -229,6 +239,11 @@ function toast(type, message) {
 
 // ─── Init ───
 onMounted(() => {
+  // Open billing tab if coming from checkout return or direct link
+  if (route.query.success || route.query.cancelled || route.query.tab === 'billing') {
+    activeTab.value = 'billing'
+  }
+
   if (authStore.user) {
     profileName.value = authStore.user.name || ''
     profileEmail.value = authStore.user.email || ''
@@ -269,6 +284,11 @@ watch(activeTab, (tab) => {
         <!-- Shield icon -->
         <svg v-else-if="tab.icon === 'shield'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        <!-- Credit Card icon -->
+        <svg v-else-if="tab.icon === 'credit-card'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+          <line x1="1" y1="10" x2="23" y2="10" />
         </svg>
         <!-- Palette icon -->
         <svg v-else-if="tab.icon === 'palette'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -570,30 +590,44 @@ watch(activeTab, (tab) => {
           </div>
         </div>
 
+        <!-- ─── Billing ─── -->
+        <div v-else-if="activeTab === 'billing'" key="billing" class="settings__panel">
+          <h1 class="settings__title">Billing</h1>
+          <p class="settings__desc">Manage your subscription and payments.</p>
+          <BillingView />
+        </div>
+
         <!-- ─── Account ─── -->
         <div v-else-if="activeTab === 'account'" key="account" class="settings__panel">
           <h1 class="settings__title">Account</h1>
           <p class="settings__desc">Manage your subscription and account.</p>
 
           <!-- Plan -->
-          <div class="settings__section">
+          <div v-if="!config.selfHosted" class="settings__section">
             <h3 class="settings__section-title">Plan</h3>
             <div class="settings__plan">
               <div class="settings__plan-badge">
-                {{ userPlan === 'pro' ? '⭐ Pro' : 'Free' }}
+                {{ billingStore.isPro ? '⭐ Pro' : 'Free' }}
               </div>
-              <p class="settings__plan-text" v-if="userPlan !== 'pro'">
+              <p class="settings__plan-text" v-if="!billingStore.isPro">
                 Upgrade to Pro for unlimited notebooks, advanced search, and more.
               </p>
               <p class="settings__plan-text" v-else>
                 You're on the Pro plan. Thanks for supporting Obscribe!
               </p>
               <button
-                v-if="userPlan !== 'pro'"
+                v-if="!billingStore.isPro"
                 class="settings__btn settings__btn--primary"
-                @click="toast('info', 'Pro upgrade coming soon!')"
+                @click="router.push('/upgrade')"
               >
                 Upgrade to Pro
+              </button>
+              <button
+                v-else
+                class="settings__btn settings__btn--ghost"
+                @click="activeTab = 'billing'"
+              >
+                Manage subscription
               </button>
             </div>
           </div>
