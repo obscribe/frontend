@@ -8,7 +8,7 @@
         <div class="auth-layout__logo">
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
             <rect width="40" height="40" rx="10" fill="var(--accent)" opacity="0.15" />
-            <path d="M12 28V12h4l4 10 4-10h4v16h-3V17l-3.5 8h-3L15 17v11h-3z" fill="var(--accent)" />
+            <text x="20" y="28" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="var(--accent)" text-anchor="middle">O</text>
           </svg>
         </div>
         <h1 class="auth-layout__title">Obscribe</h1>
