@@ -14,6 +14,8 @@ export const useAuthStore = defineStore('auth', () => {
   const userName = computed(() => user.value?.name || 'User')
   const isEmailVerified = computed(() => !!user.value?.email_verified_at)
   const isOnboarded = computed(() => !!user.value?.onboarded_at)
+  const isAdmin = computed(() => !!user.value?.is_admin)
+  const hasVault = computed(() => !!user.value?.has_vault)
 
   function setAuth(userData, tokenValue) {
     user.value = userData
@@ -48,10 +50,26 @@ export const useAuthStore = defineStore('auth', () => {
         const unlocked = await vaultStore.unlock(password)
         if (!unlocked) {
           console.warn('Vault unlock returned false — vault may not be initialized')
+          // Mark user as needing vault setup
+          if (user.value) {
+            user.value.has_vault = false
+            localStorage.setItem('obscribe_user', JSON.stringify(user.value))
+          }
+        } else {
+          // Vault is initialized and unlocked
+          if (user.value) {
+            user.value.has_vault = true
+            localStorage.setItem('obscribe_user', JSON.stringify(user.value))
+          }
         }
       } catch (vaultErr) {
         console.error('Vault unlock failed:', vaultErr)
         // Don't block login — user can still access the app, vault can be unlocked later
+      }
+
+      // Stash password temporarily for vault setup if needed
+      if (user.value && !user.value.has_vault) {
+        sessionStorage.setItem('obscribe_vault_pw', password)
       }
 
       return { success: true }
@@ -79,6 +97,12 @@ export const useAuthStore = defineStore('auth', () => {
       const { recoveryKey } = await vaultStore.initializeVault(password)
       pendingRecoveryKey.value = recoveryKey
       localStorage.setItem('obscribe_pending_recovery', recoveryKey)
+
+      // Mark vault as initialized
+      if (user.value) {
+        user.value.has_vault = true
+        localStorage.setItem('obscribe_user', JSON.stringify(user.value))
+      }
 
       return { success: true }
     } catch (err) {
@@ -140,6 +164,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isEmailVerified,
     isOnboarded,
+    isAdmin,
+    hasVault,
     userName,
     pendingRecoveryKey,
     login,

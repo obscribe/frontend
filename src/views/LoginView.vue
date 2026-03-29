@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { config } from '@/config'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { selfHosted, mailEnabled } = config
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
@@ -21,6 +23,13 @@ async function handleSubmit() {
       return
     }
     window.__obscribeToast?.('success', 'Welcome back!')
+
+    // Check if vault needs setup (CLI-created users)
+    if (authStore.user && !authStore.user.has_vault) {
+      router.push('/vault-setup')
+      return
+    }
+
     router.push('/')
   } catch (err) {
     const data = err.response?.data
@@ -85,7 +94,8 @@ async function handleSubmit() {
       <div class="auth-form__field">
         <div class="auth-form__label-row">
           <label for="password">Password</label>
-          <a href="#" class="auth-form__forgot">Forgot password?</a>
+          <a v-if="mailEnabled" href="#" class="auth-form__forgot">Forgot password?</a>
+          <span v-else-if="selfHosted" class="auth-form__forgot auth-form__forgot--muted" title="Contact your administrator to reset your password">Forgot password?</span>
         </div>
         <div class="auth-form__input-wrap">
           <svg class="auth-form__input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -109,7 +119,7 @@ async function handleSubmit() {
       </button>
     </form>
 
-    <p class="auth-form__footer">
+    <p v-if="!selfHosted" class="auth-form__footer">
       Don't have an account?
       <router-link to="/register" class="auth-form__link">Create one</router-link>
     </p>
@@ -261,6 +271,15 @@ async function handleSubmit() {
 
 .auth-form__forgot:hover {
   text-decoration: underline;
+}
+
+.auth-form__forgot--muted {
+  color: var(--text-tertiary);
+  cursor: help;
+}
+
+.auth-form__forgot--muted:hover {
+  text-decoration: none;
 }
 
 .auth-form__input-wrap {

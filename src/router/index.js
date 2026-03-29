@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { config } from '@/config'
 
 const routes = [
   {
@@ -12,6 +13,13 @@ const routes = [
     name: 'Register',
     component: () => import('@/views/RegisterView.vue'),
     meta: { layout: 'auth', guest: true },
+    beforeEnter: (to, from, next) => {
+      if (config.selfHosted) {
+        next('/login')
+      } else {
+        next()
+      }
+    },
   },
   {
     path: '/magic-link/verify',
@@ -29,6 +37,12 @@ const routes = [
     path: '/onboarding',
     name: 'Onboarding',
     component: () => import('@/views/OnboardingView.vue'),
+    meta: { layout: 'minimal', requiresAuth: true },
+  },
+  {
+    path: '/vault-setup',
+    name: 'VaultSetup',
+    component: () => import('@/views/VaultSetupView.vue'),
     meta: { layout: 'minimal', requiresAuth: true },
   },
   {
@@ -67,6 +81,12 @@ const routes = [
     component: () => import('@/views/SettingsView.vue'),
     meta: { layout: 'app', requiresAuth: true },
   },
+  {
+    path: '/admin/users',
+    name: 'AdminUsers',
+    component: () => import('@/views/admin/UsersView.vue'),
+    meta: { layout: 'app', requiresAuth: true, requiresAdmin: true },
+  },
 ]
 
 const router = createRouter({
@@ -98,12 +118,29 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // For authenticated users on app pages, enforce verification & onboarding
+  // Admin-required pages
+  if (to.meta.requiresAdmin && (!user || !user.is_admin)) {
+    next('/')
+    return
+  }
+
+  // For authenticated users on app pages, enforce verification, vault setup & onboarding
   if (isAuthenticated && user && to.meta.layout === 'app') {
-    if (!user.email_verified_at) {
+    // Check email verification (skip in self-hosted mode if email is off)
+    if (!config.selfHosted && !user.email_verified_at) {
       next('/verify-email')
       return
     }
+
+    // Check vault initialization — if no vault set up, redirect to vault setup
+    // has_vault is set by the auth store during login/registration
+    // Also check encrypted_vault_key from server response as fallback
+    const hasVault = user.has_vault || user.encrypted_vault_key
+    if (!hasVault && to.name !== 'VaultSetup') {
+      next('/vault-setup')
+      return
+    }
+
     if (!user.onboarded_at) {
       next('/onboarding')
       return
