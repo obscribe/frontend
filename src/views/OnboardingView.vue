@@ -39,11 +39,16 @@ const showConfetti = ref(false)
 
 const icons = ['📓', '📔', '📕', '📗', '📘', '📙', '✏️', '🖊️', '💡', '🔬', '🎨', '🎵', '📋', '🗂️', '💼', '🌱']
 
-onMounted(() => {
+onMounted(async () => {
   // If already onboarded, go to dashboard
   if (authStore.user?.onboarded_at) {
     router.push('/')
     return
+  }
+
+  // Ensure vault is unlocked (restore from session if available)
+  if (!vaultStore.isUnlocked) {
+    await vaultStore.tryRestoreFromSession()
   }
 
   // Generate recovery key
